@@ -154,6 +154,9 @@ Additional BSD Notice
 #include <sys/time.h>
 #include <unistd.h>
 
+#include <cstdio>
+bool mike = true;
+
 #if _OPENMP
 # include <omp.h>
 #endif
@@ -2018,8 +2021,12 @@ void CalcPressureForElems(Real_t* p_new, Real_t* bvc,
                           Real_t p_cut, Real_t eosvmax,
                           Index_t length, Index_t *regElemList)
 {
+    printf("Am I RIP Threads num:: %d\n", omp_get_thread_num());
 #pragma omp parallel for firstprivate(length)
    for (Index_t i = 0; i < length ; ++i) {
+       if (mike) {
+           printf("RIP Threads num:: %d\n", omp_get_thread_num());
+       }
       Real_t c1s = Real_t(2.0)/Real_t(3.0) ;
       bvc[i] = c1s * (compression[i] + Real_t(1.));
       pbvc[i] = c1s;
@@ -2057,6 +2064,9 @@ void CalcEnergyForElems(Real_t* p_new, Real_t* e_new, Real_t* q_new,
                         Index_t length, Index_t *regElemList)
 {
    Real_t *pHalfStep = Allocate<Real_t>(length) ;
+   if (mike) {
+       printf("Threads num:: %d\n", omp_get_thread_num());
+   }
 
 #pragma omp parallel for firstprivate(length, emin)
    for (Index_t i = 0 ; i < length ; ++i) {
@@ -2068,6 +2078,9 @@ void CalcEnergyForElems(Real_t* p_new, Real_t* e_new, Real_t* q_new,
       }
    }
 
+    if (mike) {
+        printf("Threads num:: %d\n", omp_get_thread_num());
+    }
    CalcPressureForElems(pHalfStep, bvc, pbvc, e_new, compHalfStep, vnewc,
                         pmin, p_cut, eosvmax, length, regElemList);
 
@@ -2204,6 +2217,9 @@ static inline
 void EvalEOSForElems(Domain& domain, Real_t *vnewc,
                      Int_t numElemReg, Index_t *regElemList, Int_t rep)
 {
+    if (rep == 20) {
+        printf("Mike Eval\n");
+    }
    Real_t  e_cut = domain.e_cut() ;
    Real_t  p_cut = domain.p_cut() ;
    Real_t  ss4o3 = domain.ss4o3() ;
@@ -2215,7 +2231,7 @@ void EvalEOSForElems(Domain& domain, Real_t *vnewc,
    Real_t emin    = domain.emin() ;
    Real_t rho0    = domain.refdens() ;
 
-   // These temporaries will be of different size for 
+    // These temporaries will be of different size for
    // each call (due to different sized region element
    // lists)
    Real_t *e_old = Allocate<Real_t>(numElemReg) ;
@@ -2232,12 +2248,19 @@ void EvalEOSForElems(Domain& domain, Real_t *vnewc,
    Real_t *q_new = Allocate<Real_t>(numElemReg) ;
    Real_t *bvc = Allocate<Real_t>(numElemReg) ;
    Real_t *pbvc = Allocate<Real_t>(numElemReg) ;
- 
-   //loop to add load imbalance based on region number 
+
+   //loop to add load imbalance based on region number
    for(Int_t j = 0; j < rep; j++) {
       /* compress data, minimal set */
-#pragma omp parallel
+
+       if (rep == 20 && j == 3) {
+           printf("Mike Eval before parallel %d\n", j);
+       }
+#pragma omp parallel num_threads(1)
       {
+          if (rep == 20 && j == 3) {
+              printf("Mike in parallel %d\n", j);
+          }
 #pragma omp for nowait firstprivate(numElemReg)
          for (Index_t i=0; i<numElemReg; ++i) {
             Index_t ielem = regElemList[i];
@@ -2285,15 +2308,27 @@ void EvalEOSForElems(Domain& domain, Real_t *vnewc,
             work[i] = Real_t(0.) ; 
          }
       }
+
+       if (rep == 20 && j == 4) {
+           printf("Mike Eval end loop %d\n", j);
+       }
       CalcEnergyForElems(p_new, e_new, q_new, bvc, pbvc,
                          p_old, e_old,  q_old, compression, compHalfStep,
                          vnewc, work,  delvc, pmin,
                          p_cut, e_cut, q_cut, emin,
                          qq_old, ql_old, rho0, eosvmax,
                          numElemReg, regElemList);
+
+       if (rep == 20 && j == 4) {
+           printf("Mike calc is done%d\n", j);
+       }
    }
 
-#pragma omp parallel for firstprivate(numElemReg)
+
+    if (rep == 20) {
+        printf("Mike finished loop\n");
+    }
+#pragma omp parallel for num_threads(1) firstprivate(numElemReg)
    for (Index_t i=0; i<numElemReg; ++i) {
       Index_t ielem = regElemList[i];
       domain.p(ielem) = p_new[i] ;
@@ -2329,13 +2364,14 @@ void ApplyMaterialPropertiesForElems(Domain& domain)
 {
    Index_t numElem = domain.numElem() ;
 
+  printf("Mike A1\n");
   if (numElem != 0) {
     /* Expose all of the variables needed for material evaluation */
     Real_t eosvmin = domain.eosvmin() ;
     Real_t eosvmax = domain.eosvmax() ;
     Real_t *vnewc = Allocate<Real_t>(numElem) ;
 
-#pragma omp parallel
+#pragma omp parallel num_threads(1)
     {
 #pragma omp for firstprivate(numElem)
        for(Index_t i=0 ; i<numElem ; ++i) {
@@ -2359,6 +2395,7 @@ void ApplyMaterialPropertiesForElems(Domain& domain)
           }
        }
 
+          printf("Mike A2\n");
        // This check may not make perfect sense in LULESH, but
        // it's representative of something in the full code -
        // just leave it in, please
@@ -2383,24 +2420,33 @@ void ApplyMaterialPropertiesForElems(Domain& domain)
        }
     }
 
+      printf("Mike A3\n");
     for (Int_t r=0 ; r<domain.numReg() ; r++) {
        Index_t numElemReg = domain.regElemSize(r);
        Index_t *regElemList = domain.regElemlist(r);
        Int_t rep;
        //Determine load imbalance for this region
        //round down the number with lowest cost
-       if(r < domain.numReg()/2)
-	 rep = 1;
+       if(r < domain.numReg()/2) {
+
+           rep = 1;
+       }
        //you don't get an expensive region unless you at least have 5 regions
-       else if(r < (domain.numReg() - (domain.numReg()+15)/20))
-         rep = 1 + domain.cost();
+       else if(r < (domain.numReg() - (domain.numReg()+15)/20)) {
+
+           rep = 1 + domain.cost();
+       }
        //very expensive regions
-       else
-	 rep = 10 * (1+ domain.cost());
+       else {
+
+           rep = 10 * (1+ domain.cost());
+       }
        EvalEOSForElems(domain, vnewc, numElemReg, regElemList, rep);
     }
+      printf("Mike A4\n");
 
     Release(&vnewc) ;
+      printf("Mike A5\n");
   }
 }
 
@@ -2430,14 +2476,18 @@ void UpdateVolumesForElems(Domain &domain,
 static inline
 void LagrangeElements(Domain& domain, Index_t numElem)
 {
+  printf("Mike L1\n");
   CalcLagrangeElements(domain) ;
 
   /* Calculate Q.  (Monotonic q option requires communication) */
+  printf("Mike L2\n");
   CalcQForElems(domain) ;
 
+    printf("Mike L3\n");
   ApplyMaterialPropertiesForElems(domain) ;
 
-  UpdateVolumesForElems(domain, 
+    printf("Mike L4\n");
+  UpdateVolumesForElems(domain,
                         domain.v_cut(), numElem) ;
 }
 
@@ -2605,8 +2655,12 @@ void LagrangeLeapFrog(Domain& domain)
 
    /* calculate nodal forces, accelerations, velocities, positions, with
     * applied boundary conditions and slide surface considerations */
-   LagrangeNodal(domain);
 
+    LagrangeNodal(domain);
+
+    if (mike) {
+        printf("Mike1\n");
+    }
 
 #ifdef SEDOV_SYNC_POS_VEL_LATE
 #endif
@@ -2614,9 +2668,10 @@ void LagrangeLeapFrog(Domain& domain)
    /* calculate element quantities (i.e. velocity gradient & q), and update
     * material states */
    LagrangeElements(domain, domain.numElem());
+    printf("Mike2\n");
 
-#if USE_MPI   
-#ifdef SEDOV_SYNC_POS_VEL_LATE
+#if USE_MPI
+    #ifdef SEDOV_SYNC_POS_VEL_LATE
    CommRecv(domain, MSG_SYNC_POS_VEL, 6,
             domain.sizeX() + 1, domain.sizeY() + 1, domain.sizeZ() + 1,
             false, false) ;
@@ -2635,9 +2690,10 @@ void LagrangeLeapFrog(Domain& domain)
 #endif   
 
    CalcTimeConstraintsForElems(domain);
+    printf("Mike3\n");
 
-#if USE_MPI   
-#ifdef SEDOV_SYNC_POS_VEL_LATE
+#if USE_MPI
+    #ifdef SEDOV_SYNC_POS_VEL_LATE
    CommSyncPosVel(domain) ;
 #endif
 #endif   
@@ -2679,8 +2735,8 @@ int main()
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
-   opts.its = 99;
-   opts.nx  = 5;
+   opts.its = 4;
+   opts.nx  = 4;
 //   Faasm - Defaults too big for WASM
 //   opts.its = 9999999;
 //   opts.nx  = 30;
@@ -2745,7 +2801,7 @@ int main()
 //debug to see region sizes
 //   for(Int_t i = 0; i < locDom->numReg(); i++)
 //      std::cout << "region" << i + 1<< "size" << locDom->regElemSize(i) <<std::endl;
-   while((locDom->time() < locDom->stoptime()) && (locDom->cycle() < opts.its)) {
+    while((locDom->time() < locDom->stoptime()) && (locDom->cycle() < opts.its)) {
 
       TimeIncrement(*locDom) ;
       LagrangeLeapFrog(*locDom) ;
@@ -2757,7 +2813,9 @@ int main()
 //                   << "dt="     << double(locDom->deltatime()) << "\n";
 //         std::cout.unsetf(std::ios_base::floatfield);
       }
-   }
+
+    }
+
 
    // Use reduced max elapsed time
    double elapsed_time;
@@ -2767,6 +2825,7 @@ int main()
    timeval end;
    gettimeofday(&end, NULL) ;
    elapsed_time = (double)(end.tv_sec - start.tv_sec) + ((double)(end.tv_usec - start.tv_usec))/1000000 ;
+
 #endif
    double elapsed_timeG;
 #if USE_MPI   
@@ -2780,7 +2839,7 @@ int main()
    if (opts.viz) {
       DumpToVisit(*locDom, opts.numFiles, myRank, numRanks) ;
    }
-   
+
    if ((myRank == 0) && (opts.quiet == 0)) {
       VerifyAndWriteFinalOutput(elapsed_timeG, *locDom, opts.nx, numRanks);
    }
