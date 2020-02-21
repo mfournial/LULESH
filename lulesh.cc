@@ -152,7 +152,6 @@ Additional BSD Notice
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
-#include <iostream>
 #include <unistd.h>
 
 #if _OPENMP
@@ -2680,8 +2679,11 @@ int main()
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
-   opts.its = 9999999;
-   opts.nx  = 30;
+   opts.its = 99;
+   opts.nx  = 5;
+//   Faasm - Defaults too big for WASM
+//   opts.its = 9999999;
+//   opts.nx  = 30;
    opts.numReg = 11;
    opts.numFiles = (int)(numRanks+10)/9;
    opts.showProg = 0;
@@ -2689,26 +2691,23 @@ int main()
    opts.viz = 0;
    opts.balance = 1;
    opts.cost = 1;
-   const int argc = 1;
-   char *argv[argc];
-   **argv = '\0';
 
-   ParseCommandLineOptions(argc, argv, myRank, &opts);
+//   ParseCommandLineOptions(argc, argv, myRank, &opts);
 
    if ((myRank == 0) && (opts.quiet == 0)) {
-      std::cout << "Running problem size " << opts.nx << "^3 per domain until completion\n";
-      std::cout << "Num processors: "      << numRanks << "\n";
+//      std::cout << "Running problem size " << opts.nx << "^3 per domain until completion\n";
+//      std::cout << "Num processors: "      << numRanks << "\n";
 #if _OPENMP
-      std::cout << "Num threads: " << omp_get_max_threads() << "\n";
+//      std::cout << "Num threads: " << omp_get_max_threads() << "\n";
 #endif
-      std::cout << "Total number of elements: " << ((Int8_t)numRanks*opts.nx*opts.nx*opts.nx) << " \n\n";
-      std::cout << "To run other sizes, use -s <integer>.\n";
-      std::cout << "To run a fixed number of iterations, use -i <integer>.\n";
-      std::cout << "To run a more or less balanced region set, use -b <integer>.\n";
-      std::cout << "To change the relative costs of regions, use -c <integer>.\n";
-      std::cout << "To print out progress, use -p\n";
-      std::cout << "To write an output file for VisIt, use -v\n";
-      std::cout << "See help (-h) for more options\n\n";
+//      std::cout << "Total number of elements: " << ((Int8_t)numRanks*opts.nx*opts.nx*opts.nx) << " \n\n";
+//      std::cout << "To run other sizes, use -s <integer>.\n";
+//      std::cout << "To run a fixed number of iterations, use -i <integer>.\n";
+//      std::cout << "To run a more or less balanced region set, use -b <integer>.\n";
+//      std::cout << "To change the relative costs of regions, use -c <integer>.\n";
+//      std::cout << "To print out progress, use -p\n";
+//      std::cout << "To write an output file for VisIt, use -v\n";
+//      std::cout << "See help (-h) for more options\n\n";
    }
 
    // Set up the mesh and decompose. Assumes regular cubes for now
@@ -2752,11 +2751,11 @@ int main()
       LagrangeLeapFrog(*locDom) ;
 
       if ((opts.showProg != 0) && (opts.quiet == 0) && (myRank == 0)) {
-         std::cout << "cycle = " << locDom->cycle()       << ", "
-                   << std::scientific
-                   << "time = " << double(locDom->time()) << ", "
-                   << "dt="     << double(locDom->deltatime()) << "\n";
-         std::cout.unsetf(std::ios_base::floatfield);
+//         std::cout << "cycle = " << locDom->cycle()       << ", "
+//                   << std::scientific
+//                   << "time = " << double(locDom->time()) << ", "
+//                   << "dt="     << double(locDom->deltatime()) << "\n";
+//         std::cout.unsetf(std::ios_base::floatfield);
       }
    }
 
