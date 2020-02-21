@@ -2647,7 +2647,8 @@ void LagrangeLeapFrog(Domain& domain)
 
 /******************************************/
 
-int main(int argc, char *argv[])
+//int main(int argc, char *argv[])
+int main()
 {
    Domain *locDom ;
    int numRanks ;
@@ -2688,6 +2689,9 @@ int main(int argc, char *argv[])
    opts.viz = 0;
    opts.balance = 1;
    opts.cost = 1;
+   const int argc = 1;
+   char *argv[argc];
+   **argv = '\0';
 
    ParseCommandLineOptions(argc, argv, myRank, &opts);
 
