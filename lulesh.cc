@@ -2679,8 +2679,9 @@ int main()
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
-   opts.its = 99;
-   opts.nx  = 5;
+   omp_set_max_active_levels(1); // 1 is default
+   opts.its = 5;
+   opts.nx  = 10;
 //   Faasm - Defaults too big for WASM
 //   opts.its = 9999999;
 //   opts.nx  = 30;
