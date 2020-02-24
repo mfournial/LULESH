@@ -30,18 +30,26 @@ else ()
 endif ()
 
 if (FAASM_BUILD_TYPE STREQUAL "wasm")
-    SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${FAASM_EXE_LINKER_FLAGS}" )
+    # In sync with Faasm func
+    SET(CMAKE_EXE_LINKER_FLAGS "${FAASM_EXE_LINKER_FLAGS} \
+        -Xlinker --export=_faasm_zygote \
+        -Xlinker --export=__heap_base \
+        -Xlinker --export=__data_end \
+        -Xlinker --max-memory=4294901760 \
+        -Wl,-z,stack-size=4194304 -Wl, \
+    ")
 
-    if (WITH_MPI AND WITH_OMP)
+    if (WITH_MPI AND WITH_OPENMP)
         set(lulesh_exec lulesh_ompi)
     elseif (WITH_MPI)
-        set(lulesh_exec lulesh_ompi)
+        set(lulesh_exec lulesh_mpi)
     elseif (WITH_OPENMP)
         set(lulesh_exec lulesh_omp)
     else ()
         set(lulesh_exec lulesh_bare)
     endif ()
 
+    SET(CMAKE_EXECUTABLE_SUFFIX ".wasm")
     add_executable(${lulesh_exec} ${LULESH_SOURCES})
     target_link_libraries(${lulesh_exec} faasm dlmalloc)
 

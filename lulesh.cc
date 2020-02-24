@@ -2682,7 +2682,7 @@ int main(int argc, char *argv[])
    omp_set_max_active_levels(1); // 1 is default
 #endif
    opts.its = 5;
-   opts.nx  = 10;
+   opts.nx  = 4;
 //   Faasm - Defaults too big for WASM
 //   opts.its = 9999999;
 //   opts.nx  = 30;
