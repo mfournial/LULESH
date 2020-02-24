@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.4.0)
 
 set(LULESH_SOURCES
+        lulesh.cc
         lulesh-comm.cc
         lulesh-init.cc
         lulesh-util.cc
-        lulesh-viz.cc
-        lulesh.cc)
+        lulesh-viz.cc)
 
 project(LULESH CXX)
 
@@ -30,6 +30,8 @@ else ()
 endif ()
 
 if (FAASM_BUILD_TYPE STREQUAL "wasm")
+    SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${FAASM_EXE_LINKER_FLAGS}" )
+
     if (WITH_MPI AND WITH_OMP)
         set(lulesh_exec lulesh_ompi)
     elseif (WITH_MPI)
@@ -41,7 +43,7 @@ if (FAASM_BUILD_TYPE STREQUAL "wasm")
     endif ()
 
     add_executable(${lulesh_exec} ${LULESH_SOURCES})
-    target_link_libraries(${lulesh_exec} faasmp dlmalloc)
+    target_link_libraries(${lulesh_exec} faasm dlmalloc)
 
     if (WITH_OPENMP)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
