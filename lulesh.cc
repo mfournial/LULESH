@@ -2646,8 +2646,7 @@ void LagrangeLeapFrog(Domain& domain)
 
 /******************************************/
 
-//int main(int argc, char *argv[])
-int main()
+int main(int argc, char *argv[])
 {
    Domain *locDom ;
    int numRanks ;
@@ -2679,7 +2678,9 @@ int main()
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
+#if _OPENMP
    omp_set_max_active_levels(1); // 1 is default
+#endif
    opts.its = 5;
    opts.nx  = 10;
 //   Faasm - Defaults too big for WASM
