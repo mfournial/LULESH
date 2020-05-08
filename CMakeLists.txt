@@ -9,11 +9,12 @@ set(LULESH_SOURCES
 
 project(LULESH CXX)
 
-option(WITH_MPI "Build LULESH with MPI" TRUE)
+option(WITH_MPI "Build LULESH with MPI" FALSE)
 option(WITH_OPENMP "Build LULESH with OpenMP" TRUE)
 option(WITH_SILO "Build LULESH with silo support" FALSE)
 
 if (WITH_MPI)
+    message("-- Using MPI")
     add_definitions("-DUSE_MPI=1")
     find_package(MPI QUIET)
     if (NOT MPI_FOUND)
@@ -35,6 +36,7 @@ if (FAASM_BUILD_TYPE STREQUAL "wasm")
         -Xlinker --export=_faasm_zygote \
         -Xlinker --export=__heap_base \
         -Xlinker --export=__data_end \
+        -Xlinker --export=__wasm_call_ctors \
         -Xlinker --max-memory=4294901760 \
         -Wl,-z,stack-size=4194304 -Wl, \
     ")
@@ -95,6 +97,7 @@ else ()
         endif ()
     endif ()
 
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
     add_executable(${LULESH_EXEC} ${LULESH_SOURCES})
     target_link_libraries(${LULESH_EXEC} ${LULESH_EXTERNAL_LIBS})
 endif ()

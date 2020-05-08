@@ -2678,11 +2678,8 @@ int main(int argc, char *argv[])
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
-#if _OPENMP
-   omp_set_max_active_levels(1); // 1 is default
-#endif
-   opts.its = 5;
-   opts.nx  = 4;
+   opts.its = 1;
+   opts.nx  = 20;
 //   Faasm - Defaults too big for WASM
 //   opts.its = 9999999;
 //   opts.nx  = 30;

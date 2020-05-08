@@ -1,3 +1,22 @@
+## Faasm build instructions
+
+May require separator dlmalloc compilation in the Wasm repo. As of today the invoke task for it is gone, I'll try to bring it back if that was a mistake.
+
+Compile Faasmp with the option `OMP_PTS` activated to not blow up the stack
+
+```bash
+mkdir ninja-build
+cd ninja-build
+cmake -G Ninja \
+      -DFAASM_BUILD_TYPE=wasm \
+      -DCMAKE_TOOLCHAIN_FILE=/usr/local/code/faasm/toolchain/WasiToolchain.cmake \
+       ..
+ninja
+```
+
+
+## Previous README
+
 This is the README for LULESH 2.0
 
 More information including LULESH 1.0 can be found at https://codesign.llnl.gov/lulesh.php
