@@ -37,7 +37,7 @@ if (FAASM_BUILD_TYPE STREQUAL "wasm")
         -Xlinker --export=__data_end \
         -Xlinker --export=__wasm_call_ctors \
         -Xlinker --max-memory=4294901760 \
-        -Wl,-z,stack-size=1048576 -Wl, \
+        -Wl,-z,stack-size=4194304 -Wl, \
     ")
 
     if (WITH_MPI AND WITH_OPENMP)

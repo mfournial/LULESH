@@ -2678,7 +2678,7 @@ int main(int argc, char *argv[])
 #endif   
 
    /* Set defaults that can be overridden by command line opts */
-   opts.its = 1;
+   opts.its = 2;
    opts.nx  = 20;
 //   Faasm - Defaults too big for WASM
 //   opts.its = 9999999;
